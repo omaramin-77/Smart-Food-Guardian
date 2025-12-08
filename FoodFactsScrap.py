@@ -285,3 +285,18 @@ def _parse_main_image_url(soup: BeautifulSoup) -> Optional[str]:
         return src
     return None
 
+
+def _parse_categories(soup: BeautifulSoup) -> Optional[str]:
+    container = soup.select_one("#field_categories_value")
+    if not container:
+        return None
+    names: List[str] = []
+    for a in container.find_all("a"):
+        txt = a.get_text(" ", strip=True)
+        if txt:
+            names.append(txt)
+    if not names:
+        raw = container.get_text(" ", strip=True)
+        return raw or None
+    return ", ".join(names)
+
