@@ -449,3 +449,59 @@ def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
     except Exception:
         return None
 
+
+def scrape_product(url: str, download_images: bool = False, images_dir: str = "product_images") -> ProductRecord:
+    soup = _get_soup(url)
+
+    record = ProductRecord(url=url)
+
+    record.product_name = _parse_product_name(soup)
+    record.barcode = _parse_barcode(soup)
+
+    record.brand = _parse_field_span(soup, "field_brands")
+    record.quantity = _parse_field_span(soup, "field_quantity")
+    record.packaging = _parse_field_span(soup, "field_packaging")
+    record.stores = _parse_field_span(soup, "field_stores")
+    record.countries = _parse_field_span(soup, "field_countries")
+    record.origins = _parse_field_span(soup, "field_origins")
+    record.manufacturing_places = _parse_field_span(soup, "field_manufacturing_places")
+
+    record.serving_size = _parse_serving_size(soup)
+
+    ingredients_text, allergens, traces = _parse_ingredients_block(soup)
+    record.ingredients_text = ingredients_text
+    record.allergens = allergens
+    record.traces = traces
+
+    _parse_nutrition_table(soup, record)
+
+    record.nutriscore_letter = _parse_nutriscore_letter(soup)
+    record.nova_group = _parse_nova_group(soup)
+
+    record.main_image_url = _parse_main_image_url(soup)
+    record.categories = _parse_categories(soup)
+
+    record.contains_palm_oil = _parse_palm_oil_flag(soup)
+    veg, vegan = _parse_veg_flags(soup)
+    record.vegetarian_status = veg
+    record.vegan_status = vegan
+    record.fruits_vegetables_nuts_percent = _parse_fruits_vegetables_nuts_percent(soup)
+
+    nutrient_levels = _parse_nutrient_levels(soup)
+    record.nutrient_level_fat = nutrient_levels.get("fat")
+    record.nutrient_level_saturated_fat = nutrient_levels.get("saturated_fat")
+    record.nutrient_level_sugars = nutrient_levels.get("sugars")
+    record.nutrient_level_salt = nutrient_levels.get("salt")
+
+    record.additives = _parse_additives(soup)
+
+    ecoscore_grade, carbon = _parse_ecoscore_and_carbon(soup)
+    record.ecoscore_grade = ecoscore_grade
+    record.carbon_footprint_100g = carbon
+
+    if download_images and record.main_image_url:
+        base_name = record.barcode or (record.product_name or "image").replace(" ", "_")
+        _download_image(record.main_image_url, images_dir, base_name)
+
+    return record
+
