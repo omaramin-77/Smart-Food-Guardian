@@ -245,3 +245,22 @@ def _parse_nutriscore_letter(soup: BeautifulSoup) -> Optional[str]:
     return None
 
 
+def _parse_nova_group(soup: BeautifulSoup) -> Optional[int]:
+    for p in soup.find_all("p"):
+        t = p.get_text(" ", strip=True)
+        m = re.search(r"product is in the\s+(\d)\s*-", t)
+        if m:
+            try:
+                return int(m.group(1))
+            except ValueError:
+                pass
+    for h4 in soup.find_all("h4"):
+        t = h4.get_text(" ", strip=True)
+        m = re.search(r"nova\s*group\s*(\d)", t, flags=re.I)
+        if m:
+            try:
+                return int(m.group(1))
+            except ValueError:
+                pass
+    return None
+
