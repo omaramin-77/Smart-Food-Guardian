@@ -157,3 +157,5 @@ def _parse_barcode(soup: BeautifulSoup) -> Optional[str]:
     span = soup.select_one("#barcode") or soup.select_one("span[itemprop='gtin13']")
     return span.get_text(strip=True) if span else None
 
+def _parse_field_span(soup: BeautifulSoup, field_id: str) -> Optional[str]:
+    return _get_text_or_none(soup, f"#{field_id}_value")
