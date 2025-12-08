@@ -19,3 +19,7 @@ DEFAULT_QUERY = "Snacks"
 DEFAULT_PAGE_SIZE = 100
 DEFAULT_MAX_PAGES = 10
 USER_AGENT = "SmartFoodGuardian-ML-Project/0.1 (https://openfoodfacts.org)"
+
+
+session = requests.Session()
+session.headers.update({"User-Agent": USER_AGENT})
