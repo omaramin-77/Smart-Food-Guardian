@@ -321,3 +321,15 @@ def _normalize_status(text: str) -> str:
         return "yes"
     return text.strip()
 
+
+def _parse_veg_flags(soup: BeautifulSoup) -> (Optional[str], Optional[str]):
+    veg = None
+    vegan = None
+    for h4 in soup.find_all("h4"):
+        t = h4.get_text(" ", strip=True)
+        if "Vegetarian status" in t:
+            veg = _normalize_status(t.replace("Vegetarian status", ""))
+        elif "Vegan status" in t:
+            vegan = _normalize_status(t.replace("Vegan status", ""))
+    return veg, vegan
+
