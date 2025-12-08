@@ -116,3 +116,15 @@ def _get_text_or_none(soup: BeautifulSoup, selector: str) -> Optional[str]:
         return None
     text = el.get_text(" ", strip=True)
     return text or None
+
+
+def _parse_float(text: str) -> Optional[float]:
+    if not text:
+        return None
+    m = re.search(r"([-+]?[0-9]+(?:[.,][0-9]+)?)", text)
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(",", "."))
+    except ValueError:
+        return None
