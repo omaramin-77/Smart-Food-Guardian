@@ -577,3 +577,31 @@ def save_to_csv(records: List[ProductRecord], path: str, append: bool = False) -
             writer.writerow(asdict(r))
     print(f"Saved CSV to {path} ({len(records)} products)")
 
+
+def main() -> None:
+    # You can adjust these defaults or wire this up to argparse later.
+    page_size = DEFAULT_PAGE_SIZE
+    download_images = True
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--start-page", type=int, default=1)
+    parser.add_argument("--pages", type=int, default=2)
+    parser.add_argument("--append-csv", action="store_true")
+    args = parser.parse_args()
+
+    records = scrape_snacks_dataset(
+        page_size=page_size,
+        query=DEFAULT_QUERY,
+        delay_between_requests=0.5,
+        download_images=download_images,
+        images_dir="product_images",
+        start_page=args.start_page,
+        pages_to_scrape=args.pages,
+    )
+
+    save_to_json(records, "snacks_openfoodfacts.json")
+    save_to_csv(records, "snacks_openfoodfacts.csv", append=args.append_csv)
+
+
+if __name__ == "__main__":
+    main()
