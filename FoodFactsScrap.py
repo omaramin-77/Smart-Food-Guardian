@@ -392,3 +392,15 @@ def _parse_nutrient_levels(soup: BeautifulSoup) -> Dict[str, Optional[str]]:
 
     return result
 
+
+def _parse_additives(soup: BeautifulSoup) -> List[str]:
+    panel = soup.select_one("#panel_additives_content")
+    if not panel:
+        return []
+    names: List[str] = []
+    for h4 in panel.find_all("h4"):
+        t = h4.get_text(" ", strip=True)
+        if t:
+            names.append(t)
+    return names
+
