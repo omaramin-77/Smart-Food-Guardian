@@ -75,3 +75,32 @@ class ProductRecord:
     ecoscore_grade: Optional[str] = None
     ecoscore_score: Optional[float] = None
     carbon_footprint_100g: Optional[float] = None
+
+def _fetch_json_search_page(page: int, query: str = DEFAULT_QUERY, page_size: int = DEFAULT_PAGE_SIZE) -> List[str]:
+    """Return list of product page URLs from a search page using the JSON API.
+
+    This uses the same endpoint as the HTML search page but with json=1.
+    """
+
+    params = {
+        "action": "process",
+        "search_terms": query,
+        "sort_by": "unique_scans_n",
+        "page_size": page_size,
+        "page": page,
+        "json": 1,
+    }
+    resp = session.get(BASE_SEARCH_URL, params=params, timeout=20)
+    resp.raise_for_status()
+    data = resp.json()
+    urls: List[str] = []
+
+    for p in data.get("products", []):
+        url = p.get("url")
+        code = p.get("code")
+        if not url and code:
+            url = f"{BASE_PRODUCT_URL}{code}"
+        if url:
+            urls.append(url)
+
+    return urls
