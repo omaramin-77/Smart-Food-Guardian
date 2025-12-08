@@ -217,3 +217,13 @@ def _parse_nutrition_table(soup: BeautifulSoup, record: ProductRecord) -> None:
             record.salt_100g = _parse_float(value_100g)
 
 
+def _parse_serving_size(soup: BeautifulSoup) -> Optional[str]:
+    for strong in soup.find_all("strong"):
+        txt = strong.get_text(strip=True)
+        if txt.startswith("Serving size"):
+            parent_text = strong.parent.get_text(" ", strip=True)
+            cleaned = re.sub(r"^Serving size:\s*", "", parent_text).strip()
+            return cleaned or None
+    return None
+
+
