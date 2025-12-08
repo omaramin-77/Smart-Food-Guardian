@@ -300,3 +300,12 @@ def _parse_categories(soup: BeautifulSoup) -> Optional[str]:
         return raw or None
     return ", ".join(names)
 
+
+def _parse_palm_oil_flag(soup: BeautifulSoup) -> Optional[bool]:
+    texts = soup.select(".panel_text")
+    for div in texts:
+        t = div.get_text(" ", strip=True).lower()
+        if "ingredients that contain palm oil" in t:
+            return True
+    return None
+
