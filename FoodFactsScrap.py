@@ -554,3 +554,26 @@ def scrape_snacks_dataset(
 
     return products
 
+
+def save_to_json(records: List[ProductRecord], path: str) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump([asdict(r) for r in records], f, ensure_ascii=False, indent=2)
+    print(f"Saved JSON to {path} ({len(records)} products)")
+
+
+def save_to_csv(records: List[ProductRecord], path: str, append: bool = False) -> None:
+    if not records:
+        print("No records to save to CSV.")
+        return
+
+    fieldnames = list(asdict(records[0]).keys())
+    file_exists = os.path.exists(path)
+    mode = "a" if append and file_exists else "w"
+    with open(path, mode, encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not append or not file_exists:
+            writer.writeheader()
+        for r in records:
+            writer.writerow(asdict(r))
+    print(f"Saved CSV to {path} ({len(records)} products)")
+
