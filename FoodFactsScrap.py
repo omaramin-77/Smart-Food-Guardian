@@ -426,3 +426,26 @@ def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[
 
     return ecoscore_grade, carbon
 
+
+def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
+    os.makedirs(dest_dir, exist_ok=True)
+
+    parsed = urlparse(url)
+    ext = os.path.splitext(parsed.path)[1] or ".jpg"
+    safe_base = re.sub(r"[^A-Za-z0-9_.-]+", "_", base_name or "image")
+    dest_path = os.path.join(dest_dir, safe_base + ext)
+
+    if os.path.exists(dest_path):
+        return dest_path
+
+    try:
+        resp = session.get(url, stream=True, timeout=30)
+        resp.raise_for_status()
+        with open(dest_path, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        return dest_path
+    except Exception:
+        return None
+
