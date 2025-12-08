@@ -264,3 +264,24 @@ def _parse_nova_group(soup: BeautifulSoup) -> Optional[int]:
                 pass
     return None
 
+
+def _parse_main_image_url(soup: BeautifulSoup) -> Optional[str]:
+    metas = soup.find_all("meta", attrs={"property": "og:image"})
+    for meta in metas:
+        url = meta.get("content")
+        if url and "/images/products/" in url:
+            return url
+    if metas:
+        url = metas[-1].get("content")
+        if url:
+            return url
+    img = soup.select_one("img.product_image")
+    if img and img.get("src"):
+        src = img["src"]
+        if src.startswith("//"):
+            return "https:" + src
+        if src.startswith("/"):
+            return "https://world.openfoodfacts.org" + src
+        return src
+    return None
+
