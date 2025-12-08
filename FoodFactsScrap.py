@@ -128,3 +128,22 @@ def _parse_float(text: str) -> Optional[float]:
         return float(m.group(1).replace(",", "."))
     except ValueError:
         return None
+
+def _parse_energy(text: str) -> (Optional[float], Optional[float]):
+    """Parse energy string like '2,380 kj (571 kcal)' into kJ and kcal."""
+
+    if not text:
+        return None, None
+    kj = None
+    kcal = None
+
+    m_kj = re.search(r"([0-9][0-9.,]*)\s*k[jJ]", text)
+    if m_kj:
+        kj = _parse_float(m_kj.group(1))
+
+    m_kcal = re.search(r"([0-9][0-9.,]*)\s*kcal", text, flags=re.I)
+    if m_kcal:
+        kcal = _parse_float(m_kcal.group(1))
+
+    return kj, kcal
+
