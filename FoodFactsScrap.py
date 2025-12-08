@@ -104,3 +104,8 @@ def _fetch_json_search_page(page: int, query: str = DEFAULT_QUERY, page_size: in
             urls.append(url)
 
     return urls
+
+def _get_soup(url: str) -> BeautifulSoup:
+    resp = session.get(url, timeout=20)
+    resp.raise_for_status()
+    return BeautifulSoup(resp.text, "html.parser")
