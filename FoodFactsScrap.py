@@ -343,3 +343,52 @@ def _parse_fruits_vegetables_nuts_percent(soup: BeautifulSoup) -> Optional[float
                 return _parse_float(m.group(1))
     return None
 
+
+def _parse_nutrient_levels(soup: BeautifulSoup) -> Dict[str, Optional[str]]:
+    result: Dict[str, Optional[str]] = {
+        "fat": None,
+        "saturated_fat": None,
+        "sugars": None,
+        "salt": None,
+    }
+
+    panel = soup.select_one("#panel_nutrient_levels_content")
+    if not panel:
+        return result
+
+    for li in panel.select("li.accordion-navigation"):
+        h4 = li.find("h4")
+        if not h4:
+            continue
+        text = h4.get_text(" ", strip=True).lower()
+        if text.startswith("fat "):
+            if "high" in text:
+                result["fat"] = "high"
+            elif "moderate" in text:
+                result["fat"] = "moderate"
+            elif "low" in text:
+                result["fat"] = "low"
+        elif text.startswith("saturated fat"):
+            if "high" in text:
+                result["saturated_fat"] = "high"
+            elif "moderate" in text:
+                result["saturated_fat"] = "moderate"
+            elif "low" in text:
+                result["saturated_fat"] = "low"
+        elif text.startswith("sugars"):
+            if "high" in text:
+                result["sugars"] = "high"
+            elif "moderate" in text:
+                result["sugars"] = "moderate"
+            elif "low" in text:
+                result["sugars"] = "low"
+        elif text.startswith("salt"):
+            if "high" in text:
+                result["salt"] = "high"
+            elif "moderate" in text:
+                result["salt"] = "moderate"
+            elif "low" in text:
+                result["salt"] = "low"
+
+    return result
+
