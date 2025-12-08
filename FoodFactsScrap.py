@@ -184,3 +184,36 @@ def _parse_ingredients_block(soup: BeautifulSoup) -> (Optional[str], Optional[st
 
     return ingredients_text, allergens, traces
 
+def _parse_nutrition_table(soup: BeautifulSoup, record: ProductRecord) -> None:
+    table = soup.find("table", attrs={"aria-label": "Nutrition facts"})
+    if not table:
+        return
+
+    tbody = table.find("tbody") or table
+    for row in tbody.find_all("tr"):
+        cols = row.find_all("td")
+        if len(cols) < 2:
+            continue
+        label = cols[0].get_text(" ", strip=True).lower()
+        value_100g = cols[1].get_text(" ", strip=True)
+
+        if "energy" in label:
+            kj, kcal = _parse_energy(value_100g)
+            record.energy_kj_100g = kj
+            record.energy_kcal_100g = kcal
+        elif label == "fat":
+            record.fat_100g = _parse_float(value_100g)
+        elif "saturated fat" in label:
+            record.saturated_fat_100g = _parse_float(value_100g)
+        elif label == "carbohydrates":
+            record.carbohydrates_100g = _parse_float(value_100g)
+        elif "sugars" in label:
+            record.sugars_100g = _parse_float(value_100g)
+        elif "fiber" in label:
+            record.fiber_100g = _parse_float(value_100g)
+        elif "proteins" in label or label == "protein":
+            record.proteins_100g = _parse_float(value_100g)
+        elif "salt" in label:
+            record.salt_100g = _parse_float(value_100g)
+
+
