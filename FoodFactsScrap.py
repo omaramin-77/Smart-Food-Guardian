@@ -505,3 +505,52 @@ def scrape_product(url: str, download_images: bool = False, images_dir: str = "p
 
     return record
 
+
+def scrape_snacks_dataset(
+    max_pages: int = DEFAULT_MAX_PAGES,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    query: str = DEFAULT_QUERY,
+    delay_between_requests: float = 0.5,
+    download_images: bool = False,
+    images_dir: str = "product_images",
+    start_page: int = 1,
+    pages_to_scrape: Optional[int] = None,
+) -> List[ProductRecord]:
+    products: List[ProductRecord] = []
+    seen_urls: set[str] = set()
+
+    if pages_to_scrape is not None:
+        end_page = max(start_page, start_page + pages_to_scrape - 1)
+        page_iter = range(start_page, end_page + 1)
+    else:
+        page_iter = range(1, max_pages + 1)
+
+    for page in page_iter:
+        print(f"[Search] Page {page}...")
+        try:
+            urls = _fetch_json_search_page(page, query=query, page_size=page_size)
+        except Exception as e:
+            print(f"  !! Failed to fetch search page {page}: {e}")
+            break
+
+        if not urls:
+            print("  No more products found, stopping.")
+            break
+
+        for url in urls:
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+
+            print(f"  [Product] {url}")
+            try:
+                record = scrape_product(url, download_images=download_images, images_dir=images_dir)
+                products.append(record)
+            except Exception as e:
+                print(f"    !! Failed to scrape product {url}: {e}")
+
+            if delay_between_requests > 0:
+                time.sleep(delay_between_requests)
+
+    return products
+
