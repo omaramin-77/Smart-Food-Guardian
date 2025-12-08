@@ -227,3 +227,21 @@ def _parse_serving_size(soup: BeautifulSoup) -> Optional[str]:
     return None
 
 
+def _parse_nutriscore_letter(soup: BeautifulSoup) -> Optional[str]:
+    candidates = []
+    for h4 in soup.find_all("h4"):
+        t = h4.get_text(" ", strip=True)
+        if "Nutri-Score" in t:
+            candidates.append(t)
+    if not candidates:
+        for p in soup.find_all("p"):
+            t = p.get_text(" ", strip=True)
+            if "Nutri-Score" in t:
+                candidates.append(t)
+    for t in candidates:
+        m = re.search(r"Nutri-Score[^A-E]*([A-E])", t)
+        if m:
+            return m.group(1)
+    return None
+
+
