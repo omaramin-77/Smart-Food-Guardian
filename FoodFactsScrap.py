@@ -404,3 +404,25 @@ def _parse_additives(soup: BeautifulSoup) -> List[str]:
             names.append(t)
     return names
 
+
+def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[float]):
+    ecoscore_grade = None
+    carbon = None
+
+    for h4 in soup.find_all("h4"):
+        t = h4.get_text(" ", strip=True)
+        if "Eco-Score" in t or "Ecoscore" in t:
+            m = re.search(r"Eco-Score\s*([A-E])", t, flags=re.I)
+            if m:
+                ecoscore_grade = m.group(1).upper()
+
+    for p in soup.find_all("p"):
+        t = p.get_text(" ", strip=True)
+        if "carbon footprint" in t.lower():
+            m = re.search(r"([0-9]+(?:[.,][0-9]+)?)\s*(?:kg\s*co2|g\s*co2)", t, flags=re.I)
+            if m:
+                carbon = _parse_float(m.group(1))
+                break
+
+    return ecoscore_grade, carbon
+
