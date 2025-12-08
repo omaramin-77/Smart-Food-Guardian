@@ -147,3 +147,7 @@ def _parse_energy(text: str) -> (Optional[float], Optional[float]):
 
     return kj, kcal
 
+
+def _parse_product_name(soup: BeautifulSoup) -> Optional[str]:
+    h1 = soup.select_one("h1[itemprop='name']") or soup.find("h1")
+    return h1.get_text(" ", strip=True) if h1 else None
