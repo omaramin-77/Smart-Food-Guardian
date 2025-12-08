@@ -109,3 +109,10 @@ def _get_soup(url: str) -> BeautifulSoup:
     resp = session.get(url, timeout=20)
     resp.raise_for_status()
     return BeautifulSoup(resp.text, "html.parser")
+
+def _get_text_or_none(soup: BeautifulSoup, selector: str) -> Optional[str]:
+    el = soup.select_one(selector)
+    if not el:
+        return None
+    text = el.get_text(" ", strip=True)
+    return text or None
