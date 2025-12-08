@@ -309,3 +309,15 @@ def _parse_palm_oil_flag(soup: BeautifulSoup) -> Optional[bool]:
             return True
     return None
 
+def _normalize_status(text: str) -> str:
+    t = text.strip().lower()
+    if "unknown" in t:
+        return "unknown"
+    if "non-vegetarian" in t or "not vegetarian" in t:
+        return "no"
+    if "non-vegan" in t or "not vegan" in t:
+        return "no"
+    if "vegetarian" in t or "vegan" in t:
+        return "yes"
+    return text.strip()
+
