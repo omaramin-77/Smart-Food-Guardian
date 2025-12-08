@@ -151,3 +151,9 @@ def _parse_energy(text: str) -> (Optional[float], Optional[float]):
 def _parse_product_name(soup: BeautifulSoup) -> Optional[str]:
     h1 = soup.select_one("h1[itemprop='name']") or soup.find("h1")
     return h1.get_text(" ", strip=True) if h1 else None
+
+
+def _parse_barcode(soup: BeautifulSoup) -> Optional[str]:
+    span = soup.select_one("#barcode") or soup.select_one("span[itemprop='gtin13']")
+    return span.get_text(strip=True) if span else None
+
