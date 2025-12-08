@@ -561,7 +561,7 @@ def save_to_json(records: List[ProductRecord], path: str) -> None:
     print(f"Saved JSON to {path} ({len(records)} products)")
 
 
-def save_to_csv(records: List[ProductRecord], path: str, append: bool = False) -> None:
+def save_to_csv(records: List[ProductRecord], path: str, append: bool = True) -> None:
     if not records:
         print("No records to save to CSV.")
         return
