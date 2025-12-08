@@ -159,3 +159,28 @@ def _parse_barcode(soup: BeautifulSoup) -> Optional[str]:
 
 def _parse_field_span(soup: BeautifulSoup, field_id: str) -> Optional[str]:
     return _get_text_or_none(soup, f"#{field_id}_value")
+
+def _parse_ingredients_block(soup: BeautifulSoup) -> (Optional[str], Optional[str], Optional[str]):
+    """Return (ingredients_text, allergens, traces)."""
+
+    panel = soup.select_one("#panel_ingredients_content")
+    if not panel:
+        return None, None, None
+
+    panel_texts = panel.select(".panel_text")
+    ingredients_text = None
+    allergens = None
+    traces = None
+
+    if panel_texts:
+        ingredients_text = panel_texts[0].get_text(" ", strip=True) or None
+
+    for div in panel_texts[1:]:
+        text = div.get_text(" ", strip=True)
+        if text.startswith("Allergens:"):
+            allergens = text.replace("Allergens:", "", 1).strip() or None
+        elif text.startswith("Traces:"):
+            traces = text.replace("Traces:", "", 1).strip() or None
+
+    return ingredients_text, allergens, traces
+
