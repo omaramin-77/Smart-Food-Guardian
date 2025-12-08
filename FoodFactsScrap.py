@@ -333,3 +333,13 @@ def _parse_veg_flags(soup: BeautifulSoup) -> (Optional[str], Optional[str]):
             vegan = _normalize_status(t.replace("Vegan status", ""))
     return veg, vegan
 
+
+def _parse_fruits_vegetables_nuts_percent(soup: BeautifulSoup) -> Optional[float]:
+    for div in soup.select(".panel_text"):
+        t = div.get_text(" ", strip=True)
+        if "fruits, vegetables and nuts" in t.lower():
+            m = re.search(r"([0-9]+(?:[.,][0-9]+)?)\s*%", t)
+            if m:
+                return _parse_float(m.group(1))
+    return None
+
