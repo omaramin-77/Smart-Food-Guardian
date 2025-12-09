@@ -57,7 +57,6 @@ class ProductRecord:
     contains_palm_oil: Optional[bool] = None
     vegetarian_status: Optional[str] = None
     vegan_status: Optional[str] = None
-    fruits_vegetables_nuts_percent: Optional[float] = None
 
     nutrient_level_fat: Optional[str] = None
     nutrient_level_saturated_fat: Optional[str] = None
@@ -358,16 +357,6 @@ def _parse_veg_flags(soup: BeautifulSoup) -> (Optional[str], Optional[str]):
     return veg, vegan
 
 
-def _parse_fruits_vegetables_nuts_percent(soup: BeautifulSoup) -> Optional[float]:
-    for div in soup.select(".panel_text"):
-        t = div.get_text(" ", strip=True)
-        if "fruits, vegetables and nuts" in t.lower():
-            m = re.search(r"([0-9]+(?:[.,][0-9]+)?)\s*%", t)
-            if m:
-                return _parse_float(m.group(1))
-    return None
-
-
 def _parse_nutrient_levels(soup: BeautifulSoup) -> Dict[str, Optional[str]]:
     result: Dict[str, Optional[str]] = {
         "fat": None,
@@ -549,7 +538,6 @@ def scrape_product(url: str, download_images: bool = False, images_dir: str = "p
     veg, vegan = _parse_veg_flags(soup)
     record.vegetarian_status = veg
     record.vegan_status = vegan
-    record.fruits_vegetables_nuts_percent = _parse_fruits_vegetables_nuts_percent(soup)
 
     nutrient_levels = _parse_nutrient_levels(soup)
     record.nutrient_level_fat = nutrient_levels.get("fat")
