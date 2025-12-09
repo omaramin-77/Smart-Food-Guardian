@@ -104,6 +104,48 @@ def _fetch_json_search_page(page: int, query: str = DEFAULT_QUERY, page_size: in
 
     return urls
 
+FACET_SNACKS_URL_TEMPLATE = "https://world.openfoodfacts.org/facets/categories/snacks/{page}?sort_by=nutriscore_score"
+
+
+def _fetch_facet_snacks_page(page: int) -> List[str]:
+    url = FACET_SNACKS_URL_TEMPLATE.format(page=page)
+    resp = session.get(url, timeout=20)
+    resp.raise_for_status()
+    html = resp.text
+
+    seen: set[str] = set()
+    urls: List[str] = []
+
+    for m in re.finditer(
+        r'"url"\s*:\s*"(https://world\.openfoodfacts\.org/product/[^"\\]+)"',
+        html,
+    ):
+        u = m.group(1)
+        if u not in seen:
+            seen.add(u)
+            urls.append(u)
+
+    if urls:
+        return urls
+
+    soup = BeautifulSoup(html, "html.parser")
+    for a in soup.select("a[href*='/product/']"):
+        href = a.get("href")
+        if not href:
+            continue
+        if href.startswith("//"):
+            full_url = "https:" + href
+        elif href.startswith("/"):
+            full_url = "https://world.openfoodfacts.org" + href
+        else:
+            full_url = href
+        if full_url not in seen and "/product/" in full_url:
+            seen.add(full_url)
+            urls.append(full_url)
+
+    return urls
+
+
 def _get_soup(url: str) -> BeautifulSoup:
     resp = session.get(url, timeout=20)
     resp.raise_for_status()
