@@ -670,10 +670,10 @@ def save_to_csv(records: List[ProductRecord], path: str, append: bool = True) ->
 
     fieldnames = list(asdict(records[0]).keys())
     file_exists = os.path.exists(path)
-    mode = "a" if append and file_exists else "w"
+    mode = "a" if file_exists else "w"
     with open(path, mode, encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
-        if not append or not file_exists:
+        if not file_exists:
             writer.writeheader()
         for r in records:
             writer.writerow(asdict(r))
