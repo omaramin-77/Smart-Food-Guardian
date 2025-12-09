@@ -688,6 +688,7 @@ def main() -> None:
     parser.add_argument("--start-page", type=int, default=1)
     parser.add_argument("--pages", type=int, default=2)
     parser.add_argument("--append-csv", action="store_true")
+    parser.add_argument("--search-mode", choices=["json", "facet"], default="json")
     args = parser.parse_args()
 
     records = scrape_snacks_dataset(
@@ -698,9 +699,9 @@ def main() -> None:
         images_dir="product_images",
         start_page=args.start_page,
         pages_to_scrape=args.pages,
+        search_mode=args.search_mode,
     )
 
-    save_to_json(records, "snacks_openfoodfacts.json")
     save_to_csv(records, "snacks_openfoodfacts.csv", append=args.append_csv)
 
 
