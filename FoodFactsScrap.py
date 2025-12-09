@@ -589,8 +589,9 @@ def scrape_product(url: str, download_images: bool = False, images_dir: str = "p
 
     record.additives = _parse_additives(soup)
 
-    ecoscore_grade, carbon = _parse_ecoscore_and_carbon(soup)
+    ecoscore_grade, ecoscore_score, carbon = _parse_ecoscore_and_carbon(soup)
     record.ecoscore_grade = ecoscore_grade
+    record.ecoscore_score = ecoscore_score
     record.carbon_footprint_100g = carbon
 
     if download_images and record.main_image_url:
@@ -635,8 +636,8 @@ def scrape_snacks_dataset(
             continue
 
         if not urls:
-            print("  No more products found, stopping.")
-            break
+            print("  No products found on this page, skipping to next page.")
+            continue
 
         for url in urls:
             if url in seen_urls:
@@ -680,7 +681,6 @@ def save_to_csv(records: List[ProductRecord], path: str, append: bool = True) ->
 
 
 def main() -> None:
-    # You can adjust these defaults or wire this up to argparse later.
     page_size = DEFAULT_PAGE_SIZE
     download_images = True
 
