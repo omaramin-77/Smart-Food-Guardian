@@ -609,6 +609,7 @@ def scrape_snacks_dataset(
     images_dir: str = "product_images",
     start_page: int = 1,
     pages_to_scrape: Optional[int] = None,
+    search_mode: str = "json",
 ) -> List[ProductRecord]:
     products: List[ProductRecord] = []
     seen_urls: set[str] = set()
@@ -620,12 +621,18 @@ def scrape_snacks_dataset(
         page_iter = range(1, max_pages + 1)
 
     for page in page_iter:
-        print(f"[Search] Page {page}...")
+        print(f"[Search] Page {page} (mode={search_mode})...")
         try:
-            urls = _fetch_json_search_page(page, query=query, page_size=page_size)
+            if search_mode == "facet":
+                urls = _fetch_facet_snacks_page(page)
+            else:
+                urls = _fetch_json_search_page(page, query=query, page_size=page_size)
+        except requests.exceptions.Timeout as e:
+            print(f"  !! Timeout fetching search page {page}: {e}. Skipping to next page.")
+            continue
         except Exception as e:
-            print(f"  !! Failed to fetch search page {page}: {e}")
-            break
+            print(f"  !! Failed to fetch search page {page}: {e}. Skipping to next page.")
+            continue
 
         if not urls:
             print("  No more products found, stopping.")
