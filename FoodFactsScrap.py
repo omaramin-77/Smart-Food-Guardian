@@ -325,12 +325,36 @@ def _normalize_status(text: str) -> str:
 def _parse_veg_flags(soup: BeautifulSoup) -> (Optional[str], Optional[str]):
     veg = None
     vegan = None
-    for h4 in soup.find_all("h4"):
-        t = h4.get_text(" ", strip=True)
-        if "Vegetarian status" in t:
-            veg = _normalize_status(t.replace("Vegetarian status", ""))
-        elif "Vegan status" in t:
-            vegan = _normalize_status(t.replace("Vegan status", ""))
+
+    vegan_panel = soup.select_one("#panel_ingredients_analysis_en-vegan h4")
+    if vegan_panel:
+        vegan = _normalize_status(vegan_panel.get_text(" ", strip=True))
+
+    vegetarian_panel = soup.select_one("#panel_ingredients_analysis_en-vegetarian h4")
+    if vegetarian_panel:
+        veg = _normalize_status(vegetarian_panel.get_text(" ", strip=True))
+
+    if veg is None or vegan is None:
+        for h4 in soup.find_all("h4"):
+            t = h4.get_text(" ", strip=True)
+            if "Vegetarian status" in t and veg is None:
+                veg = _normalize_status(t.replace("Vegetarian status", ""))
+            elif "Vegan status" in t and vegan is None:
+                vegan = _normalize_status(t.replace("Vegan status", ""))
+
+    if veg is None or vegan is None:
+        ordered = soup.select_one("#ordered_ingredients_list")
+        if ordered:
+            text = ordered.get_text(" ", strip=True).lower()
+            if vegan is None:
+                m = re.search(r"vegan:\s*(yes|no|unknown)", text)
+                if m:
+                    vegan = _normalize_status(m.group(0))
+            if veg is None:
+                m = re.search(r"vegetarian:\s*(yes|no|unknown)", text)
+                if m:
+                    veg = _normalize_status(m.group(0))
+
     return veg, vegan
 
 
