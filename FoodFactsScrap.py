@@ -707,3 +707,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+"""how to run in terminal:
+python FoodFactsScrap.py --start-page 52 --pages 9 --search-mode json
+python FoodFactsScrap.py --start-page 2 --pages 21 --search-mode facet
+"""
