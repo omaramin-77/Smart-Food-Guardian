@@ -429,26 +429,66 @@ def _parse_additives(soup: BeautifulSoup) -> List[str]:
     return names
 
 
-def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[float]):
+def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[float], Optional[float]):
     ecoscore_grade = None
+    ecoscore_score = None
     carbon = None
 
-    for h4 in soup.find_all("h4"):
-        t = h4.get_text(" ", strip=True)
-        if "Eco-Score" in t or "Ecoscore" in t:
-            m = re.search(r"Eco-Score\s*([A-E])", t, flags=re.I)
+    panel_total = soup.select_one("#panel_environmental_score_total")
+    if panel_total:
+        h4 = panel_total.find("h4")
+        if h4:
+            t = h4.get_text(" ", strip=True)
+            m = re.search(
+                r"Impact for this product:\s*([A-E])\s*\(Score:\s*([0-9]+(?:[.,][0-9]+)?)/100\)",
+                t,
+                flags=re.I,
+            )
             if m:
                 ecoscore_grade = m.group(1).upper()
+                ecoscore_score = _parse_float(m.group(2))
+            else:
+                m_letter = re.search(r"([A-E])", t, flags=re.I)
+                if m_letter and ecoscore_grade is None:
+                    ecoscore_grade = m_letter.group(1).upper()
+                m_score = re.search(r"([0-9]+(?:[.,][0-9]+)?)/100", t)
+                if m_score and ecoscore_score is None:
+                    ecoscore_score = _parse_float(m_score.group(1))
 
-    for p in soup.find_all("p"):
-        t = p.get_text(" ", strip=True)
-        if "carbon footprint" in t.lower():
-            m = re.search(r"([0-9]+(?:[.,][0-9]+)?)\s*(?:kg\s*co2|g\s*co2)", t, flags=re.I)
-            if m:
-                carbon = _parse_float(m.group(1))
-                break
+        if ecoscore_score is None:
+            for div in panel_total.select(".panel_text"):
+                text = div.get_text(" ", strip=True)
+                m = re.search(r"Final score:\s*([0-9]+(?:[.,][0-9]+)?)/100", text, flags=re.I)
+                if m:
+                    ecoscore_score = _parse_float(m.group(1))
+                    break
 
-    return ecoscore_grade, carbon
+    if ecoscore_grade is None:
+        for h4 in soup.find_all("h4"):
+            t = h4.get_text(" ", strip=True)
+            if "Eco-Score" in t or "Ecoscore" in t:
+                m = re.search(r"Eco-Score\s*([A-E])", t, flags=re.I)
+                if m:
+                    ecoscore_grade = m.group(1).upper()
+                    break
+
+    panel_carbon = soup.select_one("#panel_carbon_footprint")
+    if panel_carbon:
+        text = panel_carbon.get_text(" ", strip=True)
+        m = re.search(r"([0-9]+(?:[.,][0-9]+)?)\s*g\b", text)
+        if m:
+            carbon = _parse_float(m.group(1))
+
+    if carbon is None:
+        for p in soup.find_all("p"):
+            t = p.get_text(" ", strip=True)
+            if "carbon footprint" in t.lower():
+                m = re.search(r"([0-9]+(?:[.,][0-9]+)?)\s*(?:kg|g)\b", t, flags=re.I)
+                if m:
+                    carbon = _parse_float(m.group(1))
+                    break
+
+    return ecoscore_grade, ecoscore_score, carbon
 
 
 def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
