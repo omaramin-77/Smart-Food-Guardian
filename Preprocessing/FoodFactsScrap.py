@@ -115,7 +115,7 @@ def _fetch_json_search_page(
         "page": page,
         "json": 1,
     }
-    resp = session.get(BASE_SEARCH_URL, params=params, timeout=20)
+    resp = session.get(BASE_SEARCH_URL, params=params, timeout=30)
     resp.raise_for_status()
     data = resp.json()
     urls: List[str] = []
@@ -148,7 +148,7 @@ FACET_SNACKS_URL_TEMPLATE = "https://world.openfoodfacts.org/facets/categories/s
 
 def _fetch_facet_snacks_page(page: int) -> List[str]:
     url = FACET_SNACKS_URL_TEMPLATE.format(page=page)
-    resp = session.get(url, timeout=20)
+    resp = session.get(url, timeout=30)
     resp.raise_for_status()
     html = resp.text
 
@@ -186,7 +186,7 @@ def _fetch_facet_snacks_page(page: int) -> List[str]:
 
 
 def _get_soup(url: str) -> BeautifulSoup:
-    resp = session.get(url, timeout=20)
+    resp = session.get(url, timeout=30)
     resp.raise_for_status()
     return BeautifulSoup(resp.text, "html.parser")
 
