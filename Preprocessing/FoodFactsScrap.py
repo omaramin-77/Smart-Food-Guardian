@@ -19,6 +19,7 @@ DEFAULT_QUERY = "Snacks"
 DEFAULT_PAGE_SIZE = 100
 DEFAULT_MAX_PAGES = 10
 USER_AGENT = "SmartFoodGuardian-ML-Project/0.1 (https://openfoodfacts.org)"
+DEFAULT_ALLOWED_NUTRISCORE_LETTERS: set[str] = {"A", "B", "C"}
 
 
 session = requests.Session()
@@ -75,7 +76,32 @@ class ProductRecord:
     ecoscore_score: Optional[float] = None
     carbon_footprint_100g: Optional[float] = None
 
-def _fetch_json_search_page(page: int, query: str = DEFAULT_QUERY, page_size: int = DEFAULT_PAGE_SIZE) -> List[str]:
+def _normalize_nutriscore_letter_from_json(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        if not value:
+            return None
+        value = value[0]
+    s = str(value).strip().upper()
+    if not s:
+        return None
+    if ":" in s:
+        s = s.split(":")[-1].strip().upper()
+    if len(s) == 1 and s in {"A", "B", "C", "D", "E"}:
+        return s
+    if len(s) > 1:
+        m = re.search(r"\b([A-E])\b", s)
+        if m:
+            return m.group(1)
+    return None
+
+def _fetch_json_search_page(
+    page: int,
+    query: str = DEFAULT_QUERY,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    allowed_nutriscore_letters: Optional[set[str]] = None,
+) -> List[str]:
     """Return list of product page URLs from a search page using the JSON API.
 
     This uses the same endpoint as the HTML search page but with json=1.
@@ -94,7 +120,20 @@ def _fetch_json_search_page(page: int, query: str = DEFAULT_QUERY, page_size: in
     data = resp.json()
     urls: List[str] = []
 
+    allowed = allowed_nutriscore_letters
+    if allowed is None:
+        allowed = DEFAULT_ALLOWED_NUTRISCORE_LETTERS
+    allowed = {str(x).strip().upper() for x in allowed if str(x).strip()}
+
     for p in data.get("products", []):
+        nutri_letter = _normalize_nutriscore_letter_from_json(
+            p.get("nutriscore_grade")
+            or p.get("nutrition_grades")
+            or p.get("nutriscore_grade_tags")
+        )
+        if not nutri_letter or nutri_letter not in allowed:
+            continue
+
         url = p.get("url")
         code = p.get("code")
         if not url and code:
