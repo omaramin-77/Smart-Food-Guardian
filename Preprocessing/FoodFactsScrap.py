@@ -522,6 +522,9 @@ def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[
 def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
     os.makedirs(dest_dir, exist_ok=True)
 
+    if "/images/products/" not in str(url):
+        return None
+
     parsed = urlparse(url)
     ext = os.path.splitext(parsed.path)[1] or ".jpg"
     safe_base = re.sub(r"[^A-Za-z0-9_.-]+", "_", base_name or "image")
@@ -533,13 +536,42 @@ def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
     try:
         resp = session.get(url, stream=True, timeout=30)
         resp.raise_for_status()
+
+        final_url = str(getattr(resp, "url", "") or "")
+        if final_url and "/images/products/" not in final_url:
+            return None
+
+        content_type = (resp.headers.get("Content-Type") or "").lower()
+        if content_type and not content_type.startswith("image/"):
+            return None
+
+        content_length = resp.headers.get("Content-Length")
+        if content_length:
+            try:
+                if int(content_length) < 2048:
+                    return None
+            except ValueError:
+                pass
+
         with open(dest_path, "wb") as f:
+            bytes_written = 0
             for chunk in resp.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
+                    bytes_written += len(chunk)
+
+        if bytes_written < 2048:
+            try:
+                os.remove(dest_path)
+            except Exception:
+                pass
+            return None
+
         return dest_path
     except Exception:
         return None
+
+
 
 
 def scrape_product(url: str, download_images: bool = False, images_dir: str = "product_images") -> ProductRecord:
