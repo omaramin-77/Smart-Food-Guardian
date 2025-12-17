@@ -312,18 +312,15 @@ def _parse_main_image_url(soup: BeautifulSoup) -> Optional[str]:
         url = meta.get("content")
         if url and "/images/products/" in url:
             return url
-    if metas:
-        url = metas[-1].get("content")
-        if url:
-            return url
     img = soup.select_one("img.product_image")
     if img and img.get("src"):
         src = img["src"]
         if src.startswith("//"):
-            return "https:" + src
+            src = "https:" + src
         if src.startswith("/"):
-            return "https://world.openfoodfacts.org" + src
-        return src
+            src = "https://world.openfoodfacts.org" + src
+        if "/images/products/" in src:
+            return src
     return None
 
 
