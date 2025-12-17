@@ -792,6 +792,6 @@ if __name__ == "__main__":
 
 
 """how to run in terminal:
-python FoodFactsScrap.py --start-page 52 --pages 9 --search-mode json
+python FoodFactsScrap.py --start-page 1 --pages 3 --search-mode json --allowed-nutri A,B
 python FoodFactsScrap.py --start-page 2 --pages 21 --search-mode facet
 """
