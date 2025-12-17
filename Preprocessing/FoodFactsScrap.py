@@ -683,6 +683,7 @@ def scrape_snacks_dataset(
     start_page: int = 1,
     pages_to_scrape: Optional[int] = None,
     search_mode: str = "json",
+    allowed_nutriscore_letters: Optional[set[str]] = None,
 ) -> List[ProductRecord]:
     products: List[ProductRecord] = []
     seen_urls: set[str] = set()
@@ -766,7 +767,10 @@ def main() -> None:
     parser.add_argument("--pages", type=int, default=2)
     parser.add_argument("--append-csv", action="store_true")
     parser.add_argument("--search-mode", choices=["json", "facet"], default="json")
+    parser.add_argument("--allowed-nutri", type=str, default="A,B,C")
     args = parser.parse_args()
+
+    allowed_nutri = {x.strip().upper() for x in str(args.allowed_nutri).split(",") if x.strip()}
 
     records = scrape_snacks_dataset(
         page_size=page_size,
@@ -777,6 +781,7 @@ def main() -> None:
         start_page=args.start_page,
         pages_to_scrape=args.pages,
         search_mode=args.search_mode,
+        allowed_nutriscore_letters=allowed_nutri,
     )
 
     save_to_csv(records, "snacks_openfoodfacts.csv", append=args.append_csv)
