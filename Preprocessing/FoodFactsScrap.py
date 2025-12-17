@@ -699,7 +699,12 @@ def scrape_snacks_dataset(
             if search_mode == "facet":
                 urls = _fetch_facet_snacks_page(page)
             else:
-                urls = _fetch_json_search_page(page, query=query, page_size=page_size)
+                urls = _fetch_json_search_page(
+                    page,
+                    query=query,
+                    page_size=page_size,
+                    allowed_nutriscore_letters=allowed_nutriscore_letters,
+                )
         except requests.exceptions.Timeout as e:
             print(f"  !! Timeout fetching search page {page}: {e}. Skipping to next page.")
             continue
