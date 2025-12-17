@@ -624,7 +624,11 @@ def scrape_product(url: str, download_images: bool = False, images_dir: str = "p
     record.carbon_footprint_100g = carbon
 
     if download_images and record.main_image_url:
-        base_name = record.barcode or (record.product_name or "image").replace(" ", "_")
+        code = None
+        m = re.search(r"/product/([^/]+)", str(url))
+        if m:
+            code = m.group(1).strip()
+        base_name = code or record.barcode or (record.product_name or "image").replace(" ", "_")
         _download_image(record.main_image_url, images_dir, base_name)
 
     return record
