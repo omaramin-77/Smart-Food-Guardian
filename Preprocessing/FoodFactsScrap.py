@@ -102,11 +102,7 @@ def _fetch_json_search_page(
     page_size: int = DEFAULT_PAGE_SIZE,
     allowed_nutriscore_letters: Optional[set[str]] = None,
 ) -> List[str]:
-    """Return list of product page URLs from a search page using the JSON API.
-
-    This uses the same endpoint as the HTML search page but with json=1.
-    """
-
+    """Return list of product page URLs from a search page using the JSON API"""
     params = {
         "action": "process",
         "search_terms": query,
@@ -116,6 +112,7 @@ def _fetch_json_search_page(
         "json": 1,
     }
     resp = session.get(BASE_SEARCH_URL, params=params, timeout=30)
+    # for example: https://world.openfoodfacts.org/cgi/search.pl?action=process&search_terms=snacks
     resp.raise_for_status()
     data = resp.json()
     urls: List[str] = []
@@ -503,7 +500,7 @@ def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[
     return ecoscore_grade, ecoscore_score, carbon
 
 def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
-    os.makedirs(dest_dir, exist_ok=True)
+    os.makedirs(dest_dir,  exist_ok=True)
 
     if "/images/products/" not in str(url):
         return None
@@ -669,11 +666,6 @@ def scrape_snacks_dataset(
                 time.sleep(delay_between_requests)
 
     return products
-
-def save_to_json(records: List[ProductRecord], path: str) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump([asdict(r) for r in records], f, ensure_ascii=False, indent=2)
-    print(f"Saved JSON to {path} ({len(records)} products)")
 
 def save_to_csv(records: List[ProductRecord], path: str, append: bool = True) -> None:
     if not records:
