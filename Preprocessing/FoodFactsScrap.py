@@ -143,48 +143,6 @@ def _fetch_json_search_page(
 
     return urls
 
-FACET_SNACKS_URL_TEMPLATE = "https://world.openfoodfacts.org/facets/categories/snacks/{page}?sort_by=nutriscore_score"
-
-
-def _fetch_facet_snacks_page(page: int) -> List[str]:
-    url = FACET_SNACKS_URL_TEMPLATE.format(page=page)
-    resp = session.get(url, timeout=30)
-    resp.raise_for_status()
-    html = resp.text
-
-    seen: set[str] = set()
-    urls: List[str] = []
-
-    for m in re.finditer(
-        r'"url"\s*:\s*"(https://world\.openfoodfacts\.org/product/[^"\\]+)"',
-        html,
-    ):
-        u = m.group(1)
-        if u not in seen:
-            seen.add(u)
-            urls.append(u)
-
-    if urls:
-        return urls
-
-    soup = BeautifulSoup(html, "html.parser")
-    for a in soup.select("a[href*='/product/']"):
-        href = a.get("href")
-        if not href:
-            continue
-        if href.startswith("//"):
-            full_url = "https:" + href
-        elif href.startswith("/"):
-            full_url = "https://world.openfoodfacts.org" + href
-        else:
-            full_url = href
-        if full_url not in seen and "/product/" in full_url:
-            seen.add(full_url)
-            urls.append(full_url)
-
-    return urls
-
-
 def _get_soup(url: str) -> BeautifulSoup:
     resp = session.get(url, timeout=30)
     resp.raise_for_status()
@@ -196,7 +154,6 @@ def _get_text_or_none(soup: BeautifulSoup, selector: str) -> Optional[str]:
         return None
     text = el.get_text(" ", strip=True)
     return text or None
-
 
 def _parse_float(text: str) -> Optional[float]:
     if not text:
@@ -227,11 +184,9 @@ def _parse_energy(text: str) -> (Optional[float], Optional[float]):
 
     return kj, kcal
 
-
 def _parse_product_name(soup: BeautifulSoup) -> Optional[str]:
     h1 = soup.select_one("h1[itemprop='name']") or soup.find("h1")
     return h1.get_text(" ", strip=True) if h1 else None
-
 
 def _parse_barcode(soup: BeautifulSoup) -> Optional[str]:
     span = soup.select_one("#barcode") or soup.select_one("span[itemprop='gtin13']")
@@ -296,7 +251,6 @@ def _parse_nutrition_table(soup: BeautifulSoup, record: ProductRecord) -> None:
         elif "salt" in label:
             record.salt_100g = _parse_float(value_100g)
 
-
 def _parse_serving_size(soup: BeautifulSoup) -> Optional[str]:
     for strong in soup.find_all("strong"):
         txt = strong.get_text(strip=True)
@@ -305,7 +259,6 @@ def _parse_serving_size(soup: BeautifulSoup) -> Optional[str]:
             cleaned = re.sub(r"^Serving size:\s*", "", parent_text).strip()
             return cleaned or None
     return None
-
 
 def _parse_nutriscore_letter(soup: BeautifulSoup) -> Optional[str]:
     candidates = []
@@ -323,7 +276,6 @@ def _parse_nutriscore_letter(soup: BeautifulSoup) -> Optional[str]:
         if m:
             return m.group(1)
     return None
-
 
 def _parse_nova_group(soup: BeautifulSoup) -> Optional[int]:
     for p in soup.find_all("p"):
@@ -344,7 +296,6 @@ def _parse_nova_group(soup: BeautifulSoup) -> Optional[int]:
                 pass
     return None
 
-
 def _parse_main_image_url(soup: BeautifulSoup) -> Optional[str]:
     metas = soup.find_all("meta", attrs={"property": "og:image"})
     for meta in metas:
@@ -362,7 +313,6 @@ def _parse_main_image_url(soup: BeautifulSoup) -> Optional[str]:
             return src
     return None
 
-
 def _parse_categories(soup: BeautifulSoup) -> Optional[str]:
     container = soup.select_one("#field_categories_value")
     if not container:
@@ -376,7 +326,6 @@ def _parse_categories(soup: BeautifulSoup) -> Optional[str]:
         raw = container.get_text(" ", strip=True)
         return raw or None
     return ", ".join(names)
-
 
 def _parse_palm_oil_flag(soup: BeautifulSoup) -> Optional[bool]:
     texts = soup.select(".panel_text")
@@ -397,7 +346,6 @@ def _normalize_status(text: str) -> str:
     if "vegetarian" in t or "vegan" in t:
         return "yes"
     return text.strip()
-
 
 def _parse_veg_flags(soup: BeautifulSoup) -> (Optional[str], Optional[str]):
     veg = None
@@ -433,7 +381,6 @@ def _parse_veg_flags(soup: BeautifulSoup) -> (Optional[str], Optional[str]):
                     veg = _normalize_status(m.group(0))
 
     return veg, vegan
-
 
 def _parse_nutrient_levels(soup: BeautifulSoup) -> Dict[str, Optional[str]]:
     result: Dict[str, Optional[str]] = {
@@ -483,7 +430,6 @@ def _parse_nutrient_levels(soup: BeautifulSoup) -> Dict[str, Optional[str]]:
 
     return result
 
-
 def _parse_additives(soup: BeautifulSoup) -> List[str]:
     panel = soup.select_one("#panel_additives_content")
     if not panel:
@@ -494,7 +440,6 @@ def _parse_additives(soup: BeautifulSoup) -> List[str]:
         if t:
             names.append(t)
     return names
-
 
 def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[float], Optional[float]):
     ecoscore_grade = None
@@ -557,7 +502,6 @@ def _parse_ecoscore_and_carbon(soup: BeautifulSoup) -> (Optional[str], Optional[
 
     return ecoscore_grade, ecoscore_score, carbon
 
-
 def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
     os.makedirs(dest_dir, exist_ok=True)
 
@@ -609,9 +553,6 @@ def _download_image(url: str, dest_dir: str, base_name: str) -> Optional[str]:
         return dest_path
     except Exception:
         return None
-
-
-
 
 def scrape_product(url: str, download_images: bool = False, images_dir: str = "product_images") -> ProductRecord:
     soup = _get_soup(url)
@@ -672,7 +613,6 @@ def scrape_product(url: str, download_images: bool = False, images_dir: str = "p
 
     return record
 
-
 def scrape_snacks_dataset(
     max_pages: int = DEFAULT_MAX_PAGES,
     page_size: int = DEFAULT_PAGE_SIZE,
@@ -682,7 +622,6 @@ def scrape_snacks_dataset(
     images_dir: str = "product_images",
     start_page: int = 1,
     pages_to_scrape: Optional[int] = None,
-    search_mode: str = "json",
     allowed_nutriscore_letters: Optional[set[str]] = None,
 ) -> List[ProductRecord]:
     products: List[ProductRecord] = []
@@ -695,17 +634,14 @@ def scrape_snacks_dataset(
         page_iter = range(1, max_pages + 1)
 
     for page in page_iter:
-        print(f"[Search] Page {page} (mode={search_mode})...")
+        print(f"[Search] Page {page}...")
         try:
-            if search_mode == "facet":
-                urls = _fetch_facet_snacks_page(page)
-            else:
-                urls = _fetch_json_search_page(
-                    page,
-                    query=query,
-                    page_size=page_size,
-                    allowed_nutriscore_letters=allowed_nutriscore_letters,
-                )
+            urls = _fetch_json_search_page(
+                page,
+                query=query,
+                page_size=page_size,
+                allowed_nutriscore_letters=allowed_nutriscore_letters,
+            )
         except requests.exceptions.Timeout as e:
             print(f"  !! Timeout fetching search page {page}: {e}. Skipping to next page.")
             continue
@@ -734,12 +670,10 @@ def scrape_snacks_dataset(
 
     return products
 
-
 def save_to_json(records: List[ProductRecord], path: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         json.dump([asdict(r) for r in records], f, ensure_ascii=False, indent=2)
     print(f"Saved JSON to {path} ({len(records)} products)")
-
 
 def save_to_csv(records: List[ProductRecord], path: str, append: bool = True) -> None:
     if not records:
@@ -757,7 +691,6 @@ def save_to_csv(records: List[ProductRecord], path: str, append: bool = True) ->
             writer.writerow(asdict(r))
     print(f"Saved CSV to {path} ({len(records)} products)")
 
-
 def main() -> None:
     page_size = DEFAULT_PAGE_SIZE
     download_images = True
@@ -766,7 +699,6 @@ def main() -> None:
     parser.add_argument("--start-page", type=int, default=1)
     parser.add_argument("--pages", type=int, default=2)
     parser.add_argument("--append-csv", action="store_true")
-    parser.add_argument("--search-mode", choices=["json", "facet"], default="json")
     parser.add_argument("--allowed-nutri", type=str, default="A,B,C")
     args = parser.parse_args()
 
@@ -780,18 +712,14 @@ def main() -> None:
         images_dir="product_images",
         start_page=args.start_page,
         pages_to_scrape=args.pages,
-        search_mode=args.search_mode,
         allowed_nutriscore_letters=allowed_nutri,
     )
 
     save_to_csv(records, "snacks_openfoodfacts.csv", append=args.append_csv)
 
-
 if __name__ == "__main__":
     main()
 
-
 """how to run in terminal:
-python FoodFactsScrap.py --start-page 1 --pages 3 --search-mode json --allowed-nutri A,B
-python FoodFactsScrap.py --start-page 2 --pages 21 --search-mode facet
+python FoodFactsScrap.py --start-page 1 --pages 3 --allowed-nutri A,B
 """
